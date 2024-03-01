@@ -95,6 +95,8 @@ func init() {
 	AwsxLambdaConfigCmd.PersistentFlags().String("streamName", "", "kinesis stream name")
 	AwsxLambdaConfigCmd.PersistentFlags().String("keyId", "", "kms key id")
 	AwsxLambdaConfigCmd.PersistentFlags().String("functionName", "", "lambda function name")
+	AwsxLambdaConfigCmd.PersistentFlags().String("bucketName", "", "s3 bucket name")
+	AwsxLambdaConfigCmd.PersistentFlags().String("arn", "", "arn")
 	AwsxLambdaConfigCmd.PersistentFlags().String("query", "", "query")
 	AwsxLambdaConfigCmd.PersistentFlags().String("startTime", "", "start time")
 	AwsxLambdaConfigCmd.PersistentFlags().String("endTime", "", "end time")

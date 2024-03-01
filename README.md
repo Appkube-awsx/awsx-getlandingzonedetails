@@ -67,4 +67,19 @@ cli commands
 2. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getRdsList"	
 
 
+    s3
+1. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getS3Config" --bucketName="##########"
+2. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getS3List"
+
+
+    vpc
+1. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getVpcConfig" --instanceId="##########"
+2. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getVpcList"		
+
+
+    waf
+1. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getWafConfig" --instanceId="##########"
+2. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getWafList"			
+
+
    

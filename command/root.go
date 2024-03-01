@@ -14,6 +14,8 @@ import (
 	"awsx-getlandingzonedetails/handler/LB"
 	"awsx-getlandingzonedetails/handler/RDS"
 	"awsx-getlandingzonedetails/handler/S3"
+	"awsx-getlandingzonedetails/handler/VPC"
+	"awsx-getlandingzonedetails/handler/WAF"
 	"fmt"
 	"github.com/Appkube-awsx/awsx-common/authenticate"
 	"github.com/spf13/cobra"
@@ -35,7 +37,41 @@ var AwsxLandingZoneDetailsCmd = &cobra.Command{
 		if authFlag {
 			queryName, _ := cmd.PersistentFlags().GetString("query")
 			//elementType, _ := cmd.PersistentFlags().GetString("elementType")
-			if queryName == "getS3Config" {
+			if queryName == "getWafConfig" {
+				instanceId, _ := cmd.Flags().GetString("instanceId")
+				resp, err := WAF.GetWafInstanceById(instanceId, clientAuth, nil)
+				if err != nil {
+					log.Println("error while getting waf instance: ", err)
+					cmd.Help()
+					return
+				}
+				fmt.Println(resp)
+			} else if queryName == "getWafList" {
+				resp, err := WAF.ListWafInstances(clientAuth, nil)
+				if err != nil {
+					log.Println("error while getting waf list: ", err)
+					cmd.Help()
+					return
+				}
+				fmt.Println(resp)
+			} else if queryName == "getVpcConfig" {
+				instanceId, _ := cmd.Flags().GetString("instanceId")
+				resp, err := VPC.GetVpcInstanceById(instanceId, clientAuth, nil)
+				if err != nil {
+					log.Println("error while getting vpc instance: ", err)
+					cmd.Help()
+					return
+				}
+				fmt.Println(resp)
+			} else if queryName == "getVpcList" {
+				resp, err := VPC.ListVpcInstances(clientAuth, nil)
+				if err != nil {
+					log.Println("error while getting vpc list: ", err)
+					cmd.Help()
+					return
+				}
+				fmt.Println(resp)
+			} else if queryName == "getS3Config" {
 				bucketName, _ := cmd.Flags().GetString("bucketName")
 				resp, err := S3.GetS3InstanceByBucketName(bucketName, clientAuth, nil)
 				if err != nil {
@@ -290,6 +326,10 @@ func init() {
 	AwsxLandingZoneDetailsCmd.AddCommand(RDS.AwsxRdsListCmd)
 	AwsxLandingZoneDetailsCmd.AddCommand(S3.AwsxS3ListCmd)
 	AwsxLandingZoneDetailsCmd.AddCommand(S3.AwsxS3ConfigCmd)
+	AwsxLandingZoneDetailsCmd.AddCommand(VPC.AwsxVpcListCmd)
+	AwsxLandingZoneDetailsCmd.AddCommand(VPC.AwsxVpcConfigCmd)
+	AwsxLandingZoneDetailsCmd.AddCommand(WAF.AwsxWafListCmd)
+	AwsxLandingZoneDetailsCmd.AddCommand(WAF.AwsxWafConfigCmd)
 
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("rootVolumeId", "", "root volume id")
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("ebsVolume1Id", "", "ebs volume 1 id")
