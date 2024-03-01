@@ -1,6 +1,6 @@
 package main
 
-import "awsx-getlandingzonedetails/command"
+import "github.com/Appkube-awsx/awsx-getlandingzonedetails/command"
 
 func main() {
 	command.Execute()

@@ -1,4 +1,4 @@
-module awsx-getlandingzonedetails
+module github.com/Appkube-awsx/awsx-getlandingzonedetails
 
 go 1.19
 
