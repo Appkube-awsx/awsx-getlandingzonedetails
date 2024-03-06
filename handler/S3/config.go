@@ -6,10 +6,12 @@ import (
 	"github.com/Appkube-awsx/awsx-common/awsclient"
 	"github.com/Appkube-awsx/awsx-common/model"
 	"github.com/aws/aws-sdk-go/aws"
-	"log"
-
+	"github.com/aws/aws-sdk-go/aws/corehandlers"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 var AwsxS3ConfigCmd = &cobra.Command{
@@ -53,6 +55,7 @@ var AwsxS3ConfigCmd = &cobra.Command{
 type S3Bucket struct {
 	Bucket interface{} `json:"bucket"`
 	Tags   interface{} `json:"tags"`
+	Region interface{} `json:"region"`
 }
 
 func GetS3InstanceByBucketName(bucketName string, clientAuth *model.Auth, client *s3.S3) (*S3Bucket, error) {
@@ -72,8 +75,16 @@ func GetS3InstanceByBucketName(bucketName string, clientAuth *model.Auth, client
 		log.Println("error in getting bucket detail ", err)
 		return nil, err
 	}
+
+	bucketRegion, err := GetBucketRegionWithClient(client, bucketName)
+	if err != nil {
+		log.Println("error in getting bucket region ", err)
+		return nil, err
+	}
+	log.Println("bucket location : " + bucketRegion)
 	s3Bucket := S3Bucket{
 		Bucket: response,
+		Region: bucketRegion,
 	}
 	tagInput := &s3.GetBucketTaggingInput{
 		Bucket: aws.String(bucketName),
@@ -86,6 +97,65 @@ func GetS3InstanceByBucketName(bucketName string, clientAuth *model.Auth, client
 	s3Bucket.Tags = tagOutput
 
 	return &s3Bucket, nil
+}
+
+const bucketRegionHeader = "X-Amz-Bucket-Region"
+
+func GetBucketRegionWithClient(svc s3iface.S3API, bucket string) (string, error) {
+	req, _ := svc.HeadBucketRequest(&s3.HeadBucketInput{
+		Bucket: aws.String(bucket),
+	})
+	req.Config.S3ForcePathStyle = aws.Bool(true)
+
+	//req.Config.Credentials = credentials.AnonymousCredentials
+	//req.SetContext(ctx)
+
+	// Disable HTTP redirects to prevent an invalid 301 from eating the response
+	// because Go's HTTP client will fail, and drop the response if an 301 is
+	// received without a location header. S3 will return a 301 without the
+	// location header for HeadObject API calls.
+	req.DisableFollowRedirects = true
+
+	var bucketRegion string
+	req.Handlers.Send.PushBack(func(r *request.Request) {
+		bucketRegion = r.HTTPResponse.Header.Get(bucketRegionHeader)
+		if len(bucketRegion) == 0 {
+			return
+		}
+		r.HTTPResponse.StatusCode = 200
+		r.HTTPResponse.Status = "OK"
+		r.Error = nil
+	})
+	// Replace the endpoint validation handler to not require a region if an
+	// endpoint URL was specified. Since these requests are not authenticated,
+	// requiring a region is not needed when an endpoint URL is provided.
+	req.Handlers.Validate.Swap(
+		corehandlers.ValidateEndpointHandler.Name,
+		request.NamedHandler{
+			Name: "validateEndpointWithoutRegion",
+			Fn:   validateEndpointWithoutRegion,
+		},
+	)
+
+	//req.ApplyOptions(opts...)
+
+	if err := req.Send(); err != nil {
+		return "", err
+	}
+	log.Println("bucket location before normalization : " + bucketRegion)
+	bucketRegion = s3.NormalizeBucketLocation(bucketRegion)
+
+	return bucketRegion, nil
+}
+
+func validateEndpointWithoutRegion(r *request.Request) {
+	// Check if the caller provided an explicit URL instead of one derived by
+	// the SDK's endpoint resolver. For GetBucketRegion, with an explicit
+	// endpoint URL, a region is not needed. If no endpoint URL is provided,
+	// fallback the SDK's standard endpoint validation handler.
+	if len(aws.StringValue(r.Config.Endpoint)) == 0 {
+		corehandlers.ValidateEndpointHandler.Fn(r)
+	}
 }
 
 func init() {

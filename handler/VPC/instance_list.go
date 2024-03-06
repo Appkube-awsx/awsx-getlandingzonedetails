@@ -37,7 +37,7 @@ var AwsxVpcListCmd = &cobra.Command{
 	},
 }
 
-func ListVpcInstances(clientAuth *model.Auth, client *ec2.EC2) (*ec2.DescribeVpcsOutput, error) {
+func ListVpcInstances(clientAuth *model.Auth, client *ec2.EC2) ([]VpcOutput, error) {
 	log.Println("getting vpc list")
 	if client == nil {
 		client = awsclient.GetClient(*clientAuth, awsclient.EC2_CLIENT).(*ec2.EC2)
@@ -47,7 +47,15 @@ func ListVpcInstances(clientAuth *model.Auth, client *ec2.EC2) (*ec2.DescribeVpc
 		log.Println("error getting vpc list", err)
 		return nil, err
 	}
-	return result, err
+	allVpc := []VpcOutput{}
+	for _, vpc := range result.Vpcs {
+		instance, err := GetVpcInstanceById(*vpc.VpcId, clientAuth, client)
+		if err != nil {
+			return nil, err
+		}
+		allVpc = append(allVpc, *instance)
+	}
+	return allVpc, err
 }
 
 func init() {

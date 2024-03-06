@@ -50,7 +50,12 @@ var AwsxVpcConfigCmd = &cobra.Command{
 	},
 }
 
-func GetVpcInstanceById(instanceId string, clientAuth *model.Auth, client *ec2.EC2) (*ec2.DescribeVpcsOutput, error) {
+type VpcOutput struct {
+	VPC    interface{} `json:"vpc"`
+	Region interface{} `json:"region"`
+}
+
+func GetVpcInstanceById(instanceId string, clientAuth *model.Auth, client *ec2.EC2) (*VpcOutput, error) {
 	log.Println("getting aws vpc instance of given instanceId: ", instanceId)
 	if instanceId == "" {
 		log.Println("vpd id missing")
@@ -67,7 +72,41 @@ func GetVpcInstanceById(instanceId string, clientAuth *model.Auth, client *ec2.E
 		log.Println("error in getting vpc detail ", err)
 		return nil, err
 	}
-	return result, nil
+
+	subnetResp, err := client.DescribeSubnets(&ec2.DescribeSubnetsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name: aws.String("vpc-id"),
+				Values: []*string{
+					aws.String(instanceId),
+				},
+			},
+		},
+	})
+	if err != nil {
+		fmt.Println("error in getting vpc subnets: ", err)
+		return nil, err
+	}
+	var region string
+	for _, subnet := range subnetResp.Subnets {
+		zoneOutput, err := client.DescribeAvailabilityZones(&ec2.DescribeAvailabilityZonesInput{
+			ZoneIds: []*string{aws.String(*subnet.AvailabilityZoneId)},
+		})
+		if err != nil {
+			fmt.Println("error in getting availability zone: ", err)
+			continue
+		}
+		for _, avlZone := range zoneOutput.AvailabilityZones {
+			log.Println("vpc region: ", *avlZone.GroupName)
+			region = *avlZone.GroupName
+		}
+		break
+	}
+	vpcOut := VpcOutput{
+		VPC:    result.Vpcs[0],
+		Region: region,
+	}
+	return &vpcOut, nil
 }
 
 func init() {

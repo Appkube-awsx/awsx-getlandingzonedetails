@@ -37,7 +37,7 @@ var AwsxS3ListCmd = &cobra.Command{
 	},
 }
 
-func ListS3Instances(clientAuth *model.Auth, client *s3.S3) (*s3.ListBucketsOutput, error) {
+func ListS3Instances(clientAuth *model.Auth, client *s3.S3) ([]S3Bucket, error) {
 	log.Println("getting s3 list")
 	if client == nil {
 		client = awsclient.GetClient(*clientAuth, awsclient.S3_CLIENT).(*s3.S3)
@@ -48,7 +48,15 @@ func ListS3Instances(clientAuth *model.Auth, client *s3.S3) (*s3.ListBucketsOutp
 		log.Println("error getting s3 list", err)
 		return nil, err
 	}
-	return response, err
+	allBuckets := []S3Bucket{}
+	for _, bucket := range response.Buckets {
+		s3Bucket, err := GetS3InstanceByBucketName(*bucket.Name, clientAuth, client)
+		if err != nil {
+			continue
+		}
+		allBuckets = append(allBuckets, *s3Bucket)
+	}
+	return allBuckets, err
 }
 
 func init() {
