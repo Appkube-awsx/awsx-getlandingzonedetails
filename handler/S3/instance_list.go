@@ -50,11 +50,14 @@ func ListS3Instances(clientAuth *model.Auth, client *s3.S3) ([]S3Bucket, error) 
 	}
 	allBuckets := []S3Bucket{}
 	for _, bucket := range response.Buckets {
-		s3Bucket, err := GetS3InstanceByBucketName(*bucket.Name, clientAuth, client)
-		if err != nil {
-			continue
+		//s3Bucket, err := GetS3InstanceByBucketName(*bucket.Name, clientAuth, client)
+		//if err != nil {
+		//	continue
+		//}
+		s3b := S3Bucket{
+			Bucket: bucket,
 		}
-		allBuckets = append(allBuckets, *s3Bucket)
+		allBuckets = append(allBuckets, s3b)
 	}
 	return allBuckets, err
 }
