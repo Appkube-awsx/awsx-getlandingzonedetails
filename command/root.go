@@ -16,6 +16,7 @@ import (
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/LB"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/RDS"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/S3"
+	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/SSL"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/VPC"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/WAF"
 	"github.com/spf13/cobra"
@@ -37,7 +38,24 @@ var AwsxLandingZoneDetailsCmd = &cobra.Command{
 		if authFlag {
 			queryName, _ := cmd.PersistentFlags().GetString("query")
 			//elementType, _ := cmd.PersistentFlags().GetString("elementType")
-			if queryName == "getWafConfig" {
+			if queryName == "getSslConfig" {
+				arn, _ := cmd.Flags().GetString("arn")
+				resp, err := SSL.GetSslInstanceByArn(arn, clientAuth, nil)
+				if err != nil {
+					log.Println("error while getting ssl instance: ", err)
+					cmd.Help()
+					return
+				}
+				fmt.Println(resp)
+			} else if queryName == "getSslList" {
+				resp, err := SSL.ListSslInstances(clientAuth, nil)
+				if err != nil {
+					log.Println("error while getting ssl list: ", err)
+					cmd.Help()
+					return
+				}
+				fmt.Println(resp)
+			} else if queryName == "getWafConfig" {
 				instanceId, _ := cmd.Flags().GetString("instanceId")
 				resp, err := WAF.GetWafInstanceById(instanceId, clientAuth, nil)
 				if err != nil {
@@ -330,6 +348,8 @@ func init() {
 	AwsxLandingZoneDetailsCmd.AddCommand(VPC.AwsxVpcConfigCmd)
 	AwsxLandingZoneDetailsCmd.AddCommand(WAF.AwsxWafListCmd)
 	AwsxLandingZoneDetailsCmd.AddCommand(WAF.AwsxWafConfigCmd)
+	AwsxLandingZoneDetailsCmd.AddCommand(SSL.AwsxSslConfigCmd)
+	AwsxLandingZoneDetailsCmd.AddCommand(SSL.AwsxSslListCmd)
 
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("rootVolumeId", "", "root volume id")
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("ebsVolume1Id", "", "ebs volume 1 id")
