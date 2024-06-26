@@ -5,6 +5,7 @@ import (
 	"github.com/Appkube-awsx/awsx-common/authenticate"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/API_GW"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/CDN"
+	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/CLOUDWATCH"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/CONFIG_SERVICE"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/DYNAMODB"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/EC2"
@@ -38,7 +39,16 @@ var AwsxLandingZoneDetailsCmd = &cobra.Command{
 		if authFlag {
 			queryName, _ := cmd.PersistentFlags().GetString("query")
 			//elementType, _ := cmd.PersistentFlags().GetString("elementType")
-			if queryName == "getSslConfig" {
+			if queryName == "getCwAlarmList" {
+				instanceId, _ := cmd.Flags().GetString("instanceId")
+				resp, err := CLOUDWATCH.ListCwAlarms(instanceId, clientAuth, nil)
+				if err != nil {
+					log.Println("error while getting cloudwatch alarm list: ", err)
+					cmd.Help()
+					return
+				}
+				fmt.Println(resp)
+			} else if queryName == "getSslConfig" {
 				arn, _ := cmd.Flags().GetString("arn")
 				resp, err := SSL.GetSslInstanceByArn(arn, clientAuth, nil)
 				if err != nil {
@@ -350,6 +360,7 @@ func init() {
 	AwsxLandingZoneDetailsCmd.AddCommand(WAF.AwsxWafConfigCmd)
 	AwsxLandingZoneDetailsCmd.AddCommand(SSL.AwsxSslConfigCmd)
 	AwsxLandingZoneDetailsCmd.AddCommand(SSL.AwsxSslListCmd)
+	AwsxLandingZoneDetailsCmd.AddCommand(CLOUDWATCH.AwsxCwAlarmListCmd)
 
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("rootVolumeId", "", "root volume id")
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("ebsVolume1Id", "", "ebs volume 1 id")

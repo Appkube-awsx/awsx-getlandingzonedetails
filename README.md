@@ -82,4 +82,6 @@ cli commands
 2. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getWafList"			
 
 
+    cloudwatch alarms
+1. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getCwAlarmList" --instanceId="i-###########"    
    
