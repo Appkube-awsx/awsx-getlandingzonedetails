@@ -92,24 +92,29 @@ func ListCwAlarms(instanceId string, clientAuth *model.Auth, client *cloudwatch.
 	}
 	return allRecords, nil
 }
-func ListCwLogsStream(logGroupName string, clientAuth *model.Auth, client *cloudwatchlogs.CloudWatchLogs) ([]*cloudwatchlogs.OutputLogEvent, error) {
+func ListCwLogsStream(logGroupName string, clientAuth *model.Auth, client *cloudwatchlogs.CloudWatchLogs) ([]*string, error) {
 	if client == nil {
 		client = awsclient.GetClient(*clientAuth, awsclient.CLOUDWATCH_LOG).(*cloudwatchlogs.CloudWatchLogs)
 	}
+
+	var logStreamNames []*string
+
 	input := &cloudwatchlogs.DescribeLogStreamsInput{
 		LogGroupName: aws.String(logGroupName),
 	}
 	err := client.DescribeLogStreamsPages(input,
 		func(page *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
 			for _, logStream := range page.LogStreams {
-				fmt.Printf("Instance ID: %s\n", aws.StringValue(logStream.LogStreamName))
+				logStreamNames = append(logStreamNames, logStream.LogStreamName)
+				//fmt.Printf("Instance ID: %s\n", aws.StringValue(logStream.LogStreamName))
 			}
 			return !lastPage
 		})
 	if err != nil {
 		log.Printf("failed to describe log streams for log group %s: %v", logGroupName, err)
+		return nil, err
 	}
-	return nil, nil
+	return logStreamNames, nil
 }
 func ListCwLogsGorup(clientAuth *model.Auth, client *cloudwatchlogs.CloudWatchLogs) ([]string, error) {
 	if client == nil {

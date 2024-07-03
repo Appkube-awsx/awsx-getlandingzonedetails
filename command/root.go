@@ -20,6 +20,7 @@ import (
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/SSL"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/VPC"
 	"github.com/Appkube-awsx/awsx-getlandingzonedetails/handler/WAF"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/spf13/cobra"
 	"log"
 )
@@ -50,13 +51,15 @@ var AwsxLandingZoneDetailsCmd = &cobra.Command{
 				fmt.Println(resp)
 			} else if queryName == "getCwLogsLogsStreamList" {
 				logGroupName, _ := cmd.Flags().GetString("logGroupName")
-				resp, err := CLOUDWATCH.ListCwLogsStream(logGroupName, clientAuth, nil)
+				logStreamNames, err := CLOUDWATCH.ListCwLogsStream(logGroupName, clientAuth, nil)
 				if err != nil {
-					log.Println("error while getting cloudwatch alarm list: ", err)
-					cmd.Help()
-					return
+					log.Fatalf("Error listing log streams: %v", err)
 				}
-				fmt.Println(resp)
+
+				// Print the log stream names
+				for _, logStreamName := range logStreamNames {
+					fmt.Println(aws.StringValue(logStreamName))
+				}
 			} else if queryName == "getCwLogsGorupList" {
 				resp, err := CLOUDWATCH.ListCwLogsGorup(clientAuth, nil)
 				if err != nil {
@@ -395,6 +398,7 @@ func init() {
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("cloudWatchQueries", "", "aws cloudwatch metric queries")
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("serviceName", "", "service name")
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("elementType", "", "element type")
+	AwsxLandingZoneDetailsCmd.PersistentFlags().String("logGroupName", "", "log gourp name")
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("instanceId", "", "instance id")
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("tagName", "", "tag name")
 	AwsxLandingZoneDetailsCmd.PersistentFlags().String("apiKey", "", "api gateway key/id")
