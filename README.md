@@ -85,3 +85,14 @@ cli commands
     cloudwatch alarms
 1. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getCwAlarmList" --instanceId="i-###########"    
    
+``
+cloudwatch  logs group
+``
+
+1. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getCwLogsGorupList" 
+
+``
+   cloudwatch  logs stream
+   ``
+
+1. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getCwLogsLogsStreamList"  --logGroupName="EC2logstoCW"

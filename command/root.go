@@ -48,6 +48,23 @@ var AwsxLandingZoneDetailsCmd = &cobra.Command{
 					return
 				}
 				fmt.Println(resp)
+			} else if queryName == "getCwLogsLogsStreamList" {
+				logGroupName, _ := cmd.Flags().GetString("logGroupName")
+				resp, err := CLOUDWATCH.ListCwLogsStream(logGroupName, clientAuth, nil)
+				if err != nil {
+					log.Println("error while getting cloudwatch alarm list: ", err)
+					cmd.Help()
+					return
+				}
+				fmt.Println(resp)
+			} else if queryName == "getCwLogsGorupList" {
+				resp, err := CLOUDWATCH.ListCwLogsGorup(clientAuth, nil)
+				if err != nil {
+					log.Println("error while getting cloudwatch alarm list: ", err)
+					cmd.Help()
+					return
+				}
+				fmt.Println(resp)
 			} else if queryName == "getSslConfig" {
 				arn, _ := cmd.Flags().GetString("arn")
 				resp, err := SSL.GetSslInstanceByArn(arn, clientAuth, nil)

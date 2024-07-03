@@ -7,9 +7,16 @@ import (
 	"github.com/Appkube-awsx/awsx-common/model"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/spf13/cobra"
 	"log"
 )
+
+type FilteredLogEvent struct {
+	Timestamp int64
+	Message   string
+	// Add other fields as needed
+}
 
 var AwsxCwAlarmListCmd = &cobra.Command{
 	Use:   "getCwAlarmList",
@@ -84,6 +91,48 @@ func ListCwAlarms(instanceId string, clientAuth *model.Auth, client *cloudwatch.
 		nextToken = result.NextToken
 	}
 	return allRecords, nil
+}
+func ListCwLogsStream(logGroupName string, clientAuth *model.Auth, client *cloudwatchlogs.CloudWatchLogs) ([]*cloudwatchlogs.OutputLogEvent, error) {
+	if client == nil {
+		client = awsclient.GetClient(*clientAuth, awsclient.CLOUDWATCH_LOG).(*cloudwatchlogs.CloudWatchLogs)
+	}
+	input := &cloudwatchlogs.DescribeLogStreamsInput{
+		LogGroupName: aws.String(logGroupName),
+	}
+	err := client.DescribeLogStreamsPages(input,
+		func(page *cloudwatchlogs.DescribeLogStreamsOutput, lastPage bool) bool {
+			for _, logStream := range page.LogStreams {
+				fmt.Printf("Instance ID: %s\n", aws.StringValue(logStream.LogStreamName))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		log.Printf("failed to describe log streams for log group %s: %v", logGroupName, err)
+	}
+	return nil, nil
+}
+func ListCwLogsGorup(clientAuth *model.Auth, client *cloudwatchlogs.CloudWatchLogs) ([]string, error) {
+	if client == nil {
+		client = awsclient.GetClient(*clientAuth, awsclient.CLOUDWATCH_LOG).(*cloudwatchlogs.CloudWatchLogs)
+	}
+
+	var logGroupNames []string
+	input := &cloudwatchlogs.DescribeLogGroupsInput{}
+
+	err := client.DescribeLogGroupsPages(input, func(page *cloudwatchlogs.DescribeLogGroupsOutput, lastPage bool) bool {
+		for _, logGroup := range page.LogGroups {
+			logGroupNames = append(logGroupNames, *logGroup.LogGroupName)
+			fmt.Println(*logGroup.LogGroupName)
+		}
+		return !lastPage
+	})
+
+	if err != nil {
+		log.Fatalf("Failed to describe log groups: %v", err)
+		return nil, err
+	}
+
+	return logGroupNames, nil
 }
 
 func init() {
