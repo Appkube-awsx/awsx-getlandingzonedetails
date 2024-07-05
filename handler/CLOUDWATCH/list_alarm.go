@@ -1,11 +1,13 @@
 package CLOUDWATCH
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/Appkube-awsx/awsx-common/authenticate"
 	"github.com/Appkube-awsx/awsx-common/awsclient"
 	"github.com/Appkube-awsx/awsx-common/model"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudtrail"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/spf13/cobra"
@@ -139,7 +141,32 @@ func ListCwLogsGorup(clientAuth *model.Auth, client *cloudwatchlogs.CloudWatchLo
 
 	return logGroupNames, nil
 }
+func ListCwEvent(instanceId string, clientAuth *model.Auth, client *cloudtrail.CloudTrail) (string, error) {
+	if client == nil {
+		client = awsclient.GetClient(*clientAuth, awsclient.CLOUDTRAIL_CLIENT).(*cloudtrail.CloudTrail)
+	}
 
+	input := &cloudtrail.LookupEventsInput{
+		LookupAttributes: []*cloudtrail.LookupAttribute{
+			{
+				AttributeKey:   aws.String("ResourceName"),
+				AttributeValue: aws.String(instanceId),
+			},
+		},
+	}
+
+	result, err := client.LookupEvents(input)
+	if err != nil {
+		return "", fmt.Errorf("error looking up events: %v", err)
+	}
+
+	jsonResp, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("error encoding result to JSON: %v", err)
+	}
+
+	return string(jsonResp), nil
+}
 func init() {
 	AwsxCwAlarmListCmd.PersistentFlags().String("rootVolumeId", "", "root volume id")
 	AwsxCwAlarmListCmd.PersistentFlags().String("ebsVolume1Id", "", "ebs volume 1 id")

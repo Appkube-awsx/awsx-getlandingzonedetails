@@ -96,3 +96,9 @@ cloudwatch  logs group
    ``
 
 1. go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getCwLogsLogsStreamList"  --logGroupName="EC2logstoCW"
+
+``
+CloudTrail Event history
+``
+
+go run awsx-getLandingZoneDetails.go --vaultUrl=vault.synectiks.net --landingZoneId="1" --query="getCwEventList" --instanceId="i-########"
